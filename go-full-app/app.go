@@ -39,7 +39,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Starting server on PORT: %[1]v and IP: %[2]v \n", port, ip)
+	fmt.Printf("Starting server on PORT: %[1]v and POD: %[2]v \n", port, ip)
 	fmt.Printf("HOSTNAME: %s\n", hostname)
 	http.ListenAndServe(":"+port, nil)
 }
@@ -84,6 +84,7 @@ func readyHandler(response http.ResponseWriter, request *http.Request) {
 
 func flipHandler(response http.ResponseWriter, request *http.Request) {
 	var action = request.URL.Query()["action"]
+	
 	if action != nil {
 		if action[0] == "kill" {
 			fmt.Println("Received kill request. Changing app state to unhealthy...")
