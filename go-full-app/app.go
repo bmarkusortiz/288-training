@@ -14,11 +14,12 @@ var lang = flag.String("lang", "en", "run app with language support - default is
 var alive = flag.Bool("alive", true, "Condition for the app to return a healthy or un healthy response")
 var started = time.Now()
 var saves []string
+var mac string
+var hostname string
 
 func main() {
 	var port = "8080"
-	var ip = "default"
-	var hostname = os.Getenv("HOSTNAME")
+	hostname = os.Getenv("HOSTNAME")
 
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/healthz", healtzHandler)
@@ -35,12 +36,11 @@ func main() {
 
 	for _, a := range addrs {
 		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			ip = ipnet.IP.String()
+			mac = ipnet.IP.String()
 		}
 	}
 
-	fmt.Printf("Starting server on PORT: %[1]v and POD: %[2]v \n", port, ip)
-	fmt.Printf("HOSTNAME: %s\n", hostname)
+	fmt.Printf("Starting server on PORT: %[1]v POD: %[2]v MAC: %[3]v\n", port, hostname, mac)
 	http.ListenAndServe(":"+port, nil)
 }
 
@@ -49,9 +49,9 @@ func rootHandler(response http.ResponseWriter, request *http.Request) {
 
 	switch *lang {
 	case "en":
-		fmt.Fprintf(response, "Hello %s!. Welcome!\n", request.URL.Path[1:])
+		fmt.Fprintf(response, "Hello %[1]v!. Welcome from POD: %[2]v with MAC: %[3]v\n", request.URL.Path[1:], hostname, mac)
 	case "es":
-		fmt.Fprintf(response, "Hola %s!. Bienvenido!\n", request.URL.Path[1:])
+		fmt.Fprintf(response, "Hola %[1]v!. Bienvenido desde el POD: %[2]v con MAC: %[3]v!\n", request.URL.Path[1:], hostname, mac)
 	default:
 		fmt.Fprintf(response, "Error! unknown lang option -> %s\n", *lang)
 	}
