@@ -30,13 +30,13 @@ RUN   yum install -y --nodocs --disableplugin=subscription-manager golang && \
 
 # Permissions to run on OpenShift
 RUN mkdir -p ${APP_ROOT} && \
-    chown -R 1001:1001 ${APP_ROOT} && \
-    chgrp -R 0 ${APP_ROOT} && \
-    chmod -R g=u ${APP_ROOT} && \
+    chown -R gouser:gogroup ${APP_ROOT} && \
+    chgrp -R goroot ${APP_ROOT} && \
+    chmod -R gogroup ${APP_ROOT} && \
     chmod +x /usr/libexec/s2i/assemble /usr/libexec/s2i/run /usr/libexec/s2i/usage
 
 # This default user is created in the rhel7 image
-USER 1001
+USER gouser
 
 EXPOSE 8080
 
