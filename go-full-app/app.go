@@ -6,20 +6,26 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 var lang = flag.String("lang", "en", "run app with language support - default is english")
 var alive = flag.Bool("alive", true, "Condition for the app to return a healthy or un healthy response")
 var started = time.Now()
+var saves []string
 
 func main() {
 	var port = "8080"
 	var ip = "default"
+	var hostname = os.Getenv("HOSTNAME")
+
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/healthz", healtzHandler)
 	http.HandleFunc("/ready", readyHandler)
 	http.HandleFunc("/flip", flipHandler)
+	http.HandleFunc("/env", envHandler)
+	http.HandleFunc("/save", saveHandler)
 
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -32,12 +38,13 @@ func main() {
 			ip = ipnet.IP.String()
 		}
 	}
+
 	fmt.Printf("Starting server on PORT: %[1]v and IP: %[2]v \n", port, ip)
+	fmt.Printf("HOSTNAME: %s\n", hostname)
 	http.ListenAndServe(":"+port, nil)
 }
 
 func rootHandler(response http.ResponseWriter, request *http.Request) {
-
 	flag.Parse()
 
 	switch *lang {
@@ -64,6 +71,7 @@ func healtzHandler(response http.ResponseWriter, request *http.Request) {
 func readyHandler(response http.ResponseWriter, request *http.Request) {
 	now := time.Now()
 	diff := now.Sub(started)
+
 	if int(diff.Seconds()) > 30 {
 		fmt.Println("ping /ready => pong [ready]")
 		fmt.Fprintf(response, "Ready for service requests...\n")
@@ -76,13 +84,37 @@ func readyHandler(response http.ResponseWriter, request *http.Request) {
 
 func flipHandler(response http.ResponseWriter, request *http.Request) {
 	var action = request.URL.Query()["action"]
-	if action[0] == "kill" {
-		fmt.Println("Received kill request. Changing app state to unhealthy...")
-		*alive = false
-		fmt.Fprintf(response, "Switched app state to unhealthy...\n")
-	} else if action[0] == "revive" {
-		fmt.Println("Received revive request. Changing app state to healthy...")
-		*alive = true
-		fmt.Fprintf(response, "Switched app state to healthy...\n")
+	if action != nil {
+		if action[0] == "kill" {
+			fmt.Println("Received kill request. Changing app state to unhealthy...")
+			*alive = false
+			fmt.Fprintf(response, "Switched app state to unhealthy...\n")
+		} else if action[0] == "revive" {
+			fmt.Println("Received revive request. Changing app state to healthy...")
+			*alive = true
+			fmt.Fprintf(response, "Switched app state to healthy...\n")
+		}
 	}
+}
+
+func envHandler(response http.ResponseWriter, request *http.Request) {
+	for _, element := range os.Environ() {
+		variable := strings.Split(element, "=")
+		fmt.Fprintf(response, "%[1]v => %[2]v\n\n", variable[0], variable[1])
+	}
+}
+
+func saveHandler(response http.ResponseWriter, request *http.Request) {
+	var save = request.URL.Query()["data"]
+
+	if save != nil {
+		if save[0] != "" {
+			saves = append(saves, save[0])
+		}
+	}
+
+	for _, data := range saves {
+		fmt.Fprintf(response, "Data saved: %+v\n", data)
+	}
+
 }
