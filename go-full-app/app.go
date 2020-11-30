@@ -57,6 +57,7 @@ func healtzHandler(response http.ResponseWriter, request *http.Request) {
 	} else {
 		fmt.Println("ping /healthz => pong [unhealthy]")
 		http.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		fmt.Fprintf(response, "Error!. App not healthy!\n")
 	}
 }
 
@@ -68,8 +69,8 @@ func readyHandler(response http.ResponseWriter, request *http.Request) {
 		fmt.Fprintf(response, "Ready for service requests...\n")
 	} else {
 		fmt.Println("ping /ready => pong [notready]")
-		fmt.Fprintf(response, "Error! Service not ready for requests...\n")
 		http.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		fmt.Fprintf(response, "Error! Service not ready for requests...\n")
 	}
 }
 
