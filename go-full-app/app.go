@@ -69,6 +69,7 @@ func readyHandler(response http.ResponseWriter, request *http.Request) {
 	} else {
 		fmt.Println("ping /ready => pong [notready]")
 		fmt.Fprintf(response, "Error! Service not ready for requests...\n")
+		http.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
